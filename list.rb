@@ -6,21 +6,43 @@ Bundler.require
 require 'open-uri'
 
 
-page = 1
+page = 0
 
-begin
+max = 17778
 
-  STDERR.print "Listing page #{page}\n"
+mutex = Mutex.new
 
-  html = open("http://sourceforge.net/directory/?sort=name&page=#{page}").read
+projects = File.open('projects.txt', 'a')
+
+threads = 8
+
+def fetch_page n, io
+  STDERR.print "Listing page #{n}\n"
+
+  html = open("http://sourceforge.net/directory/?sort=name&page=#{n}")
 
   doc = Nokogiri::HTML(html)
   doc.css('ul.projects a.project-icon').each do |link|
-    print "http://sourceforge.net#{link['href'].gsub(/\/\?.*/, '/')}\n"
+    io.write "http://sourceforge.net#{link['href'].gsub(/\/\?.*/, '/')}\n"
+  end
+  io.flush
+
+rescue
+  sleep 5
+  retry
+end
+
+
+
+threads.times.map do
+
+  Thread.new do
+    begin
+      thread_page = mutex.synchronize{ page = page + 1 }
+
+      fetch_page thread_page, projects
+
+    end while thread_page <= max
   end
 
-  page += 1
-
-  sleep 0.3
-
-end while page < 17778 #
+end.each(&:join)
