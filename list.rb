@@ -14,7 +14,7 @@ mutex = Mutex.new
 
 projects = File.open('projects.txt', 'a')
 
-threads = 8
+threads = 4
 
 def fetch_page n, io
   STDERR.print "Listing page #{n}\n"
