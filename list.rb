@@ -28,6 +28,7 @@ def fetch_page n, io
   io.flush
 
 rescue
+  STDERR.print "Error on page #{n}, retrying...\n"
   sleep 5
   retry
 end
